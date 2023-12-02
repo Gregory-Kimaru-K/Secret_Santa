@@ -1,0 +1,38 @@
+<html>
+    <head>
+        <meta name="viewpoint" content="width=device-width, initial-scale=1.0"/>
+        <title>
+            Secret Santa
+        </title>
+        <link rel="stylesheet" href="index.css"/>
+    </head>
+    <body>
+        <div class="wheel">
+            <div class="sa" id="sa">
+                <div class="sa1">
+                    <span class="spa"><strong>10</strong></span>
+                    <span class="spb"><strong>30</strong></span>
+                    <span class="spc"><strong>50</strong></span>
+                    <span class="spd"><strong>70</strong></span>
+                </div>
+                <div class="sa2">
+                    <span class="spa"><strong>20</strong></span>
+                    <span class="spb"><strong>40</strong></span>
+                    <span class="spc"><strong>60</strong></span>
+                    <span class="spd"><strong>80</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <button class="rotatewheel" onclick="magicWheel()">Rotate</button>
+
+        <script>
+            function magicWheel() {
+                var x = 1024;
+                var b = 9999;
+                var dgre = Math.floor(Math.random()*(x-b))+b;
+                document.getElementById('sa').style.transform="rotate("+dgre+"deg)"
+            }
+        </script>
+    </body>
+</html>
