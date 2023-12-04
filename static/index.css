@@ -26,8 +26,7 @@ body{
     background-size: 32px;
     right: -50px;
     top: 50%;
-    transform: translate(0%, -50%);
-    z-index: 2;
+    transform: translateY(-50%);
 }
 
 .sa {

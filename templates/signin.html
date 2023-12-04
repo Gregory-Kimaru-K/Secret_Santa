@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}
+Login Page
+{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename ='auth.css')}}"/>
+{% endblock %}
+
+{% block content %}
+<h1>Become a Santa</h1>
+        <form method="post" action="{{ url_for('signin') }}">
+            <input type="text" name="username" placeholder="username" required><br>
+            <input type="password" name="password" id = "password" placeholder="Password" required><br>
+            <input type="password" name="Confirm password" id="confirmpassword" placeholder="confirmpassword" required><br>
+            <input type="submit" value="Register as Santa">
+        </form>
+
+<script>
+    function validateForm() {
+        var password = document.getElementById('password').value; 
+        var confirm_password = document.getElementById('confirmpassword').value;
+
+        if (password != confirm_password){
+            alert ("Passwords do not match");
+            return false;
+        }
+        return true
+
+    }
+</script>
+{% endblock %}
