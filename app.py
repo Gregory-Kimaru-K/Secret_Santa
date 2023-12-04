@@ -1,7 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for
+from flask import flash
+import secrets
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
+app.secret_key = secrets.token_hex(16)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 
 db = SQLAlchemy(app)
@@ -17,17 +21,30 @@ def create_tables():
 
 @app.route("/signin", methods = ['GET', 'POST'])
 def signin():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        if request.method == 'POST':
+            username = request.form['username']
+            password = request.form['password']
 
-        new_user = User(username=username, password=password)
-        db.session.add(new_user)
-        db.session.commit()
-        
-        return redirect(url_for('success'))
+            existing_user = User.query.filter_by(username=username).first()
+            existing_password = User.query.filter_by(password=password).first()
+            
+            if existing_user:
+                flash('Account with username already exists.\nPlease choose another one')
+                return redirect(url_for('signin')) 
 
-    return render_template('signin.html')
+            if existing_password:
+                flash('Account with password already exists.\nPlease choose another one')
+                return redirect(url_for('signin'))
+            
+            new_user = User(username=username, password=password)
+            db.session.add(new_user)
+            db.session.commit()
+            
+            flash('Registration successful', 'success')
+            return redirect(url_for('success'))
+
+        return render_template('signin.html')
+    
 
 @app.route("/success")
 def success():
