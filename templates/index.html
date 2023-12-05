@@ -1,43 +1,67 @@
 <html>
     <head>
-        <meta name="viewpoint" content="width=device-width, initial-scale=1.0"/>
         <title>
-            Secret Santa
+            Spin Wheel
         </title>
-        <link rel="stylesheet" href="..\static\index.css"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index.css') }}"/>
     </head>
     <body>
-        <div class="wheel">
-            <div class="sa" id="sa">
-                <div class="sa1">
-                    <span class="spa"><strong>10</strong></span>
-                    <span class="spb"><strong>30</strong></span>
-                    <span class="spc"><strong>50</strong></span>
-                    <span class="spd"><strong>70</strong></span>
-                </div>
-                <div class="sa2">
-                    <span class="spa"><strong>20</strong></span>
-                    <span class="spb"><strong>40</strong></span>
-                    <span class="spc"><strong>60</strong></span>
-                    <span class="spd"><strong>80</strong></span>
-                </div>
-            </div>
+        <div class="wheel" id="wheel-container">
+            {% for user in users %}
+            <div class="wheel-section" data-angle="{{ 360 / users|length }}" style="background-color: {{ user.color }};"></div>
+            {% endfor %}
         </div>
-
-        <button class="rotatewheel" onclick="magicWheel()">Rotate</button>
+        <button class="rotatewheel" onclick="magicWheel()">Rotate</button>    
 
         <script>
             function magicWheel() {
-                var x = 1024;
-                var b = 9999;
-                var dgre = Math.floor(Math.random()*(x-b))+b;
-                document.getElementById('sa').style.transform="rotate("+dgre+"deg)"
+                var wheelContainer = document.getElementById('wheel-container');
+                var sections = document.getElementsByClassName('wheel-section');
+
+                var totalAngle = 0;
+                for (var i = 0; i < sections.length; i++) {
+                    totalAngle += parseInt(sections[i].getAttribute('data-angle'));
+                }
+
+                var currentAngle = 0;
+                var rotations = 5; // Number of rotations
+                var targetAngle = currentAngle + rotations * 360 + Math.floor(Math.random() * totalAngle); // Random target within one full rotation
+
+                // Duration of the spin in milliseconds
+                var duration = 5000;
+
+                var startTime = null;
+
+                function rotateWheel(timestamp) {
+                    if (!startTime) {
+                        startTime = timestamp;
+                    }
+
+                    var progress = timestamp - startTime;
+                    var percentage = Math.min(progress / duration, 1);
+
+                    currentAngle = easeOutCubic(percentage) * targetAngle;
+
+                    for (var i = 0; i < sections.length; i++) {
+                        var angle = parseInt(sections[i].getAttribute('data-angle'));
+                        sections[i].style.transform = 'rotate(' + currentAngle + 'deg)';
+                    }
+
+                    if (percentage < 1) {
+                        requestAnimationFrame(rotateWheel);
+                    } else {
+                        startTime = null;
+                    }
+                }
+
+                requestAnimationFrame(rotateWheel);
             }
+
+            function easeOutCubic(t) {
+                return (--t) * t * t + 1;
+            }
+
         </script>
     </body>
-    <style>
-        body {
-            background-color: yellow;
-        }
-    </style>
 </html>

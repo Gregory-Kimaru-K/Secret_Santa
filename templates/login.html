@@ -3,15 +3,25 @@
 Login Page
 {% endblock %}
 
-{% block style %}
-<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename ='auth.css')}}"/>
-{% endblock %}
 
 {% block content %}
-<h1>Login Santa</h1>
+<div class="container">
+<h1>Welcome back to the North Pole Santa</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <form method="post" action="{{ url_for('login') }}">
             <input type="text" name="username" placeholder="username" required><br>
             <input type="password" name="password" placeholder="Password" required><br>
             <input type="submit" value=" Santa">
         </form>
+
+        
 {% endblock %}
