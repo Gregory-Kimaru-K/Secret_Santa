@@ -1,141 +1,203 @@
-from flask import Flask, render_template, request, redirect, url_for
-from flask import flash
-import secrets
+from flask import Flask, render_template, redirect, url_for, request, flash, Blueprint
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-import random
-from werkzeug.security import check_password_hash, generate_password_hash
-import string
+from flask_migrate import Migrate
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_cors import CORS
+import secrets
+import logging
+from datetime import datetime
+import random 
+from random import choice
+import jsonify
+import json as flask_json
+
 
 app = Flask(__name__)
-app.secret_key = secrets.token_hex(16)
-
+app.config['SECRET_KEY'] = secrets.token_hex(16)  # Updated secret key
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
+# Enable CORS for specific origins
+CORS(app)
+
+# Set up Flask-Login
 login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'login'  # login route
 
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key = True)
-    username = db.Column(db.String(80), unique = True, nullable = False)
-    password = db.Column(db.String(40), unique = True, nullable = False)
-    color = db.Column(db.String(7), nullable=False)
+# Define User model with UserMixin for Flask-Login
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    chosen_by = db.relationship('Pairing', foreign_keys='Pairing.chosen_id', backref='chosen_user', lazy='dynamic')
+
+    @property
+    def password(self):
+        raise AttributeError('Password is not a readable attribute.')
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 class Pairing(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
-    chooser_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    chosen_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-def create_tables():
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
+    id = db.Column(db.Integer, primary_key=True)
+    chooser_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    chosen_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class CustomJSONEncoder(flask_json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, User):
+            #return a dictionary of User attributes
+            return {'id': obj.id, 'name':obj.name}
+        return super().default(obj)
+    
+app.json_encoder = flask_json.JSONEncoder
+
+#Maintaining set to store chosen user IDs
+chosen_users = set()
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.query(User).get(int(user_id))
 
-def generate_random_color():
-    return "#{:06x}".format(random.randint(0, 0xFFFFFF))
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        password = request.form.get('password')
+        confirmpassword =request.form.get('confirmpassword')
 
-@app.route("/signin", methods = ['GET', 'POST'])
-def signin():
-        if request.method == 'POST':
-            username = request.form['username']
-            password = request.form['password']
-            confirm_password = request.form['confirm_password']
 
-            if len(username) <= 2:
-                flash("Username must have more than 2 characters", 'danger')
-                return redirect(url_for('signin'))
-            
-            if password != confirm_password:
-                flash('Passwords do not match', 'danger')
-                return redirect(url_for('signin'))
+        existing_user = User.query.filter_by(name=name).first()
 
-            existing_user = User.query.filter_by(username=username).first()
 
-            if existing_user:
-                flash('Account with username already exists.\nPlease choose another one', 'warning')
-                return redirect(url_for('login')) 
+        if existing_user:
+            flash('Account already exists. Please use a different email or log in.', 'error')
+            return redirect(url_for('register')) 
+               
+        if password != confirmpassword:
+            flash('Error password don\'t match', 'error')
+            return redirect(url_for('register'))
 
-            hashed_password = generate_password_hash(password, method='sha256')
-            new_user = User(username=username, password=hashed_password, color=generate_random_color())
+        else:
+            new_user = User(name=name, password=password)
             db.session.add(new_user)
-            try:
-                db.session.commit()
-            
-            except Exception as e:
-                db.session.rollback()
-                flash(f"Error commiting to the database: {str(e)}", "danger")
+            db.session.commit()
 
-            login_user(new_user)           
-            flash('Registration successful', 'success')
-            return redirect(url_for('home'))
+            flash('Registration successful! You can now log in.', 'success')
+            login_user(new_user)
 
-        return render_template('signin.html')
-    
-@app.route("/login", methods=['GET', 'POST'])
+            return redirect (url_for('wheel'))
+
+    return render_template('register.html')
+
+
+@app.route('/')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        name = request.form.get('name')
+        password = request.form.get('password')
 
-        user = User.query.filter_by(username=username).first()
-    
-        if user and check_password_hash(user.password, password):
-            login_user(user)
-            flash("Login successful", "success")
-            return redirect(url_for('home'))
-        
+        user = User.query.filter_by(name=name).first()
+
+        if user:
+            # User found, check password
+            if user.verify_password(password):
+                login_user(user)
+                flash(f'Welcome back, {user.name}! Login successful!', 'success')
+                return redirect(url_for('user'))
+            else:
+                flash('Incorrect password. Please try again.', 'error')
         else:
-            flash("invalid username or password", "danger")
+            flash('User not found. Please register or check the email.', 'error')
 
     return render_template('login.html')
 
-@app.route("/logout")
+@app.route('/user')
+@login_required
+def user():
+    return redirect(url_for('wheel'))
+
+@app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    flash('Logout successfully','success')
+    flash('Logout successful!', 'success')
     return redirect(url_for('login'))
 
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
 
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    logging.error(f"Internal Server Error: {error}")
+    return render_template('500.html'), 500
 
-@app.route("/success")
-def success():
-    return 'Registration successful'
-
-@app.route("/")
-@login_required
-def home():
-    users = User.query.all()
-    return render_template("index.html", users=users)
-
-
-@app.route("/santato")
-def santato():
-    return render_template("results.html")
-
-@app.route("/users")
-def show_users():
-    users = User.query.all()
-    return render_template("users.html", users = users)
-
-@app.route("/wheel")
+@app.route('/wheel')
 @login_required
 def wheel():
     users = User.query.all()
-    return render_template("wheel.html", users=users)
+    users_data = [{'id': user.id, 'name': user.name} for user in users]
+    num_segments = len(users)
+    #convert current_user to a serialized for mainly because local proxy cannot directly serialize to JSON
+    current_user_data = {'id': current_user.id, 'name': current_user.name}
+    
+    return render_template('wheel.html', users=users_data, num_segments=num_segments, current_user=current_user_data)
 
-@app.route('/spin_wheel')
+@app.route("/save_pairing", methods=['POST'])
 @login_required
-def spin_wheel():
-    users = User.query.all()
-    return render_template("spin_wheel.html", users=users)
+def save_pairing():
+    data = request.get_json()
+
+    chooser_id = data.get('chooserId')
+
+   #Check if the chooser has made a choice
+    existing_pairing = Pairing.query.filter_by(chooser_id=chooser_id).first()
+    if existing_pairing:
+        return jsonify({"error": "Chooser has already made choice"})
+
+    #Get a list of all users excluding the chooser
+    all_users_except_chooser = User.query.filter(User.id != chooser_id).all()
+
+    #randomly select a user from the list as the chosen one
+    chosen_user = choice(all_users_except_chooser)
+    chosen_id = chosen_user.id
+  
+    #check if chosn user has already been chosen
+    if chosen_id in chosen_users:
+        return jsonify({"error": "Chosen user has already been chosen"})
+
+    #add chosen person to list of users
+    chosen_users.add(chosen_id)
+
+    new_pairing = Pairing(chooser_id=chooser_id, chosen_id=chosen_id)
+    db.session.add(new_pairing)
+    db.session.commit()
+
+    print("Pairing saved successfully.")
+    
+    return jsonify ({"success": "Pairing saved successfully"})
+
+#Display the current pairings
+@app.route("/pairings")
+@login_required
+def pairings():
+    pairings = Pairing.query.all()
+    return render_template("pairings.html", pairings=pairings)
 
 if __name__ == '__main__':
-    create_tables()
-    app.run(debug=True)
+    with app.app_context():
+        db.create_all()
+        # Enable HTTPS SSl (For testing not production)
+
+        app.run(debug=True)

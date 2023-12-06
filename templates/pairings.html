@@ -1,0 +1,47 @@
+<html>
+    <head>
+        <title>
+            Pairing Page
+        </title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <table>>
+            <thead>
+                <tr>
+                    <th>
+                        Id
+                    </th>
+                    <th>
+                        Chooser_Id
+                    </th>
+                    <th>
+                        Chosen_Id
+                    </th>
+                    <th>
+                        Pairing time
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pairing in pairings %}
+                    <tr>
+                        <td>
+                            {{ pairing.id }}
+                        </td>
+                        <td>
+                            {{ pairing.chooser_id }}
+                        </td>
+                        <td>
+                            {{ pairing.chosen_id }}
+                        </td>
+                        <td>
+                            {{ pairing.created_at }}
+                        </td>
+                    </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </body>
+</html>

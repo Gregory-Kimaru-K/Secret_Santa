@@ -1,0 +1,287 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE-edge">
+    <title>
+        Spin - Win Game
+    </title> 
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #af0007;
+        }
+        canvas{
+            width:800px;
+            height: 800px;
+        }
+        #snow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 1000;
+}
+    
+    </style>
+</head>
+<body bgcolor="#AF0007"><div id="snow"></div>
+
+    <script src="{{ url_for ('static', filename='JS/phaser.js') }}"></script>
+    <script>
+        //Hello World of Phaser = Basic Game = Single Scene in Spin & Win Game
+        //How to create the basic skeleton for the game -> Game Loop
+
+        var current_user = {{ current_user|tojson|safe }};
+        var users = {{ users|tojson|safe }};
+        var num_segments = {{ num_segments|tojson|safe }};
+
+
+        // Create an array of user names
+        let userNames = users.map(user => user.name);
+
+        if (!users || !Array.isArray(users) || users.length == 0) {
+            console.error("Invalid user data");
+        }
+        // Update prizes_config based on the user data
+        let prizes_config = {
+            count: num_segments,
+            prize_names: userNames,
+        };
+
+
+
+        let config = {
+            type : Phaser.CANVAS,
+            width : 900,
+            height: 900,
+            backgroundColor : 0xffcc00,
+            
+            scene : {
+                preload : preload,
+                create : create,
+                // update : update,
+            }
+        
+        };
+        let game = new Phaser.Game(config);
+
+        function preload() {
+            console.log("Preload");
+            // Load audio files
+            this.load.audio('tick', 'static/Assets/tick.mp3');
+            this.load.audio('clap', 'static/Assets/clap.mp3');
+            this.load.audio('tune', 'static/Assets/tune.mp3');
+
+            // Load image files
+            this.load.image('background', 'static/Assets/screen.jpg');
+            this.load.image('wheel', 'static/Assets/wheelin.png');
+            this.load.image('pin', 'static/Assets/pinin.png');
+            this.load.image('stand', 'static/Assets/stnd.png');
+        }
+
+        function create(){
+            console.log("Create");
+
+            //buttons
+            // <button onclick="spinwheel()">Click me</button>
+            // this.load.onClick('spinwheel();');
+
+            //create the background image
+            let W = game.config.width;
+            let H = game.config.height;
+            
+            let background = this.add.sprite(0,0,'background');
+            background.setPosition(W/2,H/2);
+            background.setScale(0.18);
+
+            //lets create the stand
+            let stand = this.add.sprite(W/2,H/2,'stand');
+            stand.setScale(0.8);
+            
+
+            //lets create a pin
+            let pin = this.add.sprite(W/2,H/2,"pin");
+            pin.setScale(0.8);
+            pin.depth = 1;
+            
+            //let create wheel
+            this.wheel = this.add.sprite(W/2,H/2,"wheel");
+            this.wheel.setScale(0.215); 
+            //this.wheel.alpha = 0.5;
+            
+            
+
+            // the game has just started = we can spin the wheel
+            this.canSpin = true;
+            
+            //event listener for mouse click
+            this.input.on("pointerdown",spinwheel,this);
+            
+            //lets create text object
+            font_style = {
+                font : "bold 40px Arial",
+                align : "center",
+                color : "white",
+            }
+            this.game_text = this.add.text(50, 80, "🌟✨ click santa and let fate reveal 🎅🤶",font_style);
+            
+            
+            
+        }
+        document.addEventListener('DOMContentLoaded', function(){
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
+            script.onload = function(){
+                particlesJS("snow", {
+                    "particles": {
+                        "number": {
+                            "value": 200,
+                            "density": {
+                                "enable": true,
+                                "value_area": 800
+                            }
+                        },
+                        "color": {
+                            "value": "#ffffff"
+                        },
+                        "opacity": {
+                            "value": 0.7,
+                            "random": false,
+                            "anim": {
+                                "enable": false
+                            }
+                        },
+                        "size": {
+                            "value": 5,
+                            "random": true,
+                            "anim": {
+                                "enable": false
+                            }
+                        },
+                        "line_linked": {
+                            "enable": false
+                        },
+                        "move": {
+                            "enable": true,
+                            "speed": 5,
+                            "direction": "bottom",
+                            "random": true,
+                            "straight": false,
+                            "out_mode": "out",
+                            "bounce": false,
+                            "attract": {
+                                "enable": true,
+                                "rotateX": 300,
+                                "rotateY": 1200
+                            }
+                        }
+                    },
+                    "interactivity": {
+                        "events": {
+                            "onhover": {
+                                "enable": false
+                            },
+                            "onclick": {
+                                "enable": false
+                            },
+                            "resize": false
+                        }
+                    },
+                    "retina_detect": true
+                });
+            }
+            document.head.append(script);
+        });
+        //Game Loop
+        // function update(){
+        //     console.log("Inside Update");
+        //     //this.wheel.angle += 1;
+        // }
+        let tick = new Audio('Assets/tick.mp3');
+        let clap = new Audio('Assets/clap.mp3');
+        let gametune = new Audio('Assets/tune.mp3');
+
+        function spinwheel(check){
+
+            // can we spin the wheel?
+            if(this.canSpin){
+                //clap pause here
+                clap.pause();
+                // star 
+                tick.play();
+
+                //game tune
+                gametune.play();
+
+                //player cannot spin 
+                this.canSpin=false;
+
+                console.log("You clicked the mouse");
+                console.log("Start spinning");
+                //this.game_text.setText("You clicked the mouse!");
+                
+                let rounds = Phaser.Math.Between(2,4);
+                let degrees = Phaser.Math.Between(0,11)*30;
+                
+                let total_angle = rounds*360 + degrees;
+                console.log(total_angle);
+                
+                let idx = prizes_config.count - 1 - Math.floor(degrees/(360/prizes_config.count));
+                
+                
+                tween = this.tweens.add({
+                    targets: this.wheel,
+                    angle: total_angle, 
+                    ease: "Cubic.easeOut",
+                    duration: 6000,
+                    callbackScope:this,
+                    onComplete:function(){
+
+                        //pause game tune
+                        // gametune.pause();
+
+                        //clap play here
+                        clap.play();
+                        chosen_user = prizes_config.prize_names[idx];
+                        this.game_text.setText("You got : " + prizes_config.prize_names[idx] + "\nChosen:" + chosen_user);
+                        // clap.pause();
+                        // player can spin again
+                        this.canSpin=true;
+                        // clap.play()
+                        
+                        alert('You chose:' + chosen_user);
+
+                        fetch('/save_pairing', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                chooserId: current_user.id, 
+                            }),
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                        console.log(data);
+                        //handle the response, update the UI 
+                        })
+                        .catch(error=>{
+                            console.error("Error", error);
+                        });
+                    },
+                });
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>
