@@ -1,8 +1,10 @@
 <html>
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE-edge">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='wheel_style.css') }}"/>
     <title>
         Spin - Win Game
     </title> 
@@ -20,18 +22,21 @@
             height: 800px;
         }
         #snow {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    z-index: 1000;
-}
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 1000;
+        }
     
     </style>
 </head>
 <body bgcolor="#AF0007"><div id="snow"></div>
+    <div class="wrapper">
+        <a href="{{ url_for('logout') }}" class="btn">Log out</a>
+    </div>
 
     <script src="{{ url_for ('static', filename='JS/phaser.js') }}"></script>
     <script>

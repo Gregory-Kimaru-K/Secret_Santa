@@ -9,7 +9,7 @@ import logging
 from datetime import datetime
 import random 
 from random import choice
-import jsonify
+from flask import jsonify
 import json as flask_json
 
 
@@ -74,24 +74,37 @@ def register():
         password = request.form.get('password')
         confirmpassword =request.form.get('confirmpassword')
 
+        if len(name) < 14:
+            flash('Error: Name must be atleast 14 characters long', 'error')
+            return redirect(url_for('register'))
 
         existing_user = User.query.filter_by(name=name).first()
 
 
         if existing_user:
-            flash('Account already exists. Please use a different email or log in.', 'error')
+            flash('Account already exists.\n Please use a different name or log in.', 'error')
             return redirect(url_for('register')) 
                
         if password != confirmpassword:
             flash('Error password don\'t match', 'error')
             return redirect(url_for('register'))
+        
+        if len(password) < 7 or not any(char.isalpha() for char in password) or not any(char.isdigit() for char in password):
+            if len(password) < 7:
+                flash("Password must be more than 7 characters\n", 'error')
+            
+            if not any(char.isalpha() for char in password):
+                flash("Pass should contain character to make it more secure\n", 'error')
+            
+            if not any(char.isdigit() for char in password):
+                flash("Pass should contain character to make it more secure\n", 'error')
 
         else:
             new_user = User(name=name, password=password)
             db.session.add(new_user)
             db.session.commit()
 
-            flash('Registration successful! You can now log in.', 'success')
+            flash('Registration successful! You can now log in.\n', 'success')
             login_user(new_user)
 
             return redirect (url_for('wheel'))
@@ -112,12 +125,12 @@ def login():
             # User found, check password
             if user.verify_password(password):
                 login_user(user)
-                flash(f'Welcome back, {user.name}! Login successful!', 'success')
+                flash(f'Welcome back, {user.name}! Login successful!\n', 'success')
                 return redirect(url_for('user'))
             else:
-                flash('Incorrect password. Please try again.', 'error')
+                flash('Incorrect password. Please try again.\n', 'error')
         else:
-            flash('User not found. Please register or check the email.', 'error')
+            flash('User not found. Please register or check the email.\n', 'error')
 
     return render_template('login.html')
 
@@ -151,7 +164,7 @@ def wheel():
     num_segments = len(users)
     #convert current_user to a serialized for mainly because local proxy cannot directly serialize to JSON
     current_user_data = {'id': current_user.id, 'name': current_user.name}
-    
+
     return render_template('wheel.html', users=users_data, num_segments=num_segments, current_user=current_user_data)
 
 @app.route("/save_pairing", methods=['POST'])
@@ -200,4 +213,4 @@ if __name__ == '__main__':
         db.create_all()
         # Enable HTTPS SSl (For testing not production)
 
-        app.run(debug=True)
+        app.run(host="0.0.0.0", port=5000)

@@ -1,0 +1,46 @@
+/* wheel-style.css */
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #af0007;
+}
+
+.wrapper {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.wrapper .btn {
+    text-decoration: none;
+    width: 10000px;
+    height: 30px;
+    padding: 8px;
+    background: rgb(1, 252, 1);
+    border: 2px solid rgb(1, 252, 1);
+    backdrop-filter: blur(420px);
+    outline: none;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+    cursor: pointer;
+    font-size: 20px;
+    color: rgba(8, 46, 171, 0.772);
+    font-weight: 600;
+    transition: 0.5s ease-in-out;
+}
+
+.wrapper .btn:hover {
+    transform: scale(1.1);
+    background-color: green;
+    color: white;
+}
+
+.wrapper .btn:active {
+    transform: scale(1.2);
+    font-size: 25px;
+    background-color: #0D98BA;
+}
