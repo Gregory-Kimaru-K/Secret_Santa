@@ -11,6 +11,7 @@ import random
 from random import choice
 from flask import jsonify
 import json as flask_json
+from sqlalchemy import func
 
 
 app = Flask(__name__)
@@ -125,19 +126,30 @@ def login():
         name = request.form.get('name')
         password = request.form.get('password')
 
+        print(f"Entered username: {name}")
+        print(f"Entered password: {password}")
+
         user = User.query.filter_by(name=name).first()
 
         if user:
             # User found, check password
+            print(f"User found: {user.name}")
+
             if user.verify_password(password):
                 login_user(user)
                 flash(f'Welcome back, {user.name}! Login successful!\n', 'success')
                 return redirect(url_for('user'))
             else:
                 flash('Incorrect password. Please try again.\n', 'error')
+                print("Incorrect password")
         else:
             flash('User not found.\nPlease register\n', 'error')
-            return redirect(url_for('register'))
+            print("User not found")
+
+        # Add this line to see the entered username and password in the console
+        print(f"Entered username: {name}, Entered password: {password}")
+
+        return redirect(url_for('register'))
 
     return render_template('login.html')
 
@@ -169,7 +181,7 @@ def wheel():
     users = User.query.all()
     users_data = [{'id': user.id, 'name': user.name} for user in users]
     num_segments = len(users)
-    #convert current_user to a serialized for mainly because local proxy cannot directly serialize to JSON
+    # convert current_user to a serialized for mainly because local proxy cannot directly serialize to JSON
     current_user_data = {'id': current_user.id, 'name': current_user.name}
 
     return render_template('wheel.html', users=users_data, num_segments=num_segments, current_user=current_user_data)
@@ -223,5 +235,5 @@ if __name__ == '__main__':
         db.create_all()
         # Enable HTTPS SSl (For testing not production)
 
-        app.run(debug=False, host="0.0.0.0", port=5000)
-        # app.run(debug=True)
+        # app.run(debug=False, host="0.0.0.0", port=5000)
+        app.run(debug=True)

@@ -51,6 +51,7 @@
         // Create an array of user names
         let userNames = users.map(user => user.name);
 
+        let currentPairing = null;
         let game;
         if (!users || !Array.isArray(users) || users.length == 0) {
             console.error("Invalid user data");
@@ -89,6 +90,14 @@
 
         function create(){
             console.log("Create");
+
+            let currentPairing = null;
+
+            //currentPairing intialization if stored in local storage
+            const storedPairing = localStorage.getItem('userPairing');
+            if (storedPairing) {
+                currentPairing = JSON.parse(storedPairing);
+            }
 
             //buttons
             // <button onclick="spinwheel()">Click me</button>
@@ -221,6 +230,12 @@
                 return;
             }
 
+            // Check if the current user is already paired
+            if (currentPairing) {
+                alert(`You are already paired. You cannot spin again`);
+                return;
+            }
+
             // Can we spin the wheel?
             if (this.canSpin) {
                 // Player cannot spin
@@ -237,46 +252,52 @@
 
                 let idx = prizes_config.count - 1 - Math.floor(degrees / (360 / prizes_config.count));
 
-                tween = this.tweens.add({
-                    targets: this.wheel,
-                    angle: total_angle,
-                    ease: "Cubic.easeOut",
-                    duration: 6000,
-                    callbackScope: this,
-                    onComplete: function () {
-                        if (prizes_config.count > 0) {
-                            // Add the chosen user to the set
-                            chosen_user.add(prizes_config.prize_names[idx]);
-                            this.game_text.setText("You got: " + prizes_config.prize_names[idx] + "\nChosen: " + prizes_config.prize_names[idx]);
+                // Check if the chosen user is already chosen
+                let chosenUserName = prizes_config.prize_names[idx];
+                if (chosen_user.has(chosenUserName)) {
+                    alert(`You have already chosen ${chosenUserName}.`);
+                    this.canSpin = true;
+                    return;
+                }
 
-                            alert('You chose: ' + prizes_config.prize_names[idx]);
+                // Set current pairing
+                currentPairing = { name: chosenUserName, id: idx };
 
-                            fetch('/save_pairing', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    chooserId: current_user.id,
-                                }),
-                            })
-                                .then(response => response.json())
-                                .then(data => {
-                                    console.log(data);
-                                    // Handle the response, update the UI
-                                })
-                                .catch(error => {
-                                    console.error("Error", error);
-                                });
-                        } else {
-                            alert("No users available to be chosen.");
-                        }
-                        // Player can spin
-                        this.canSpin = true;
-                    },
-                });
+                if (prizes_config.count > 0) {
+                    // Add the chosen user to the set
+                    chosen_user.add(chosenUserName);
+
+                    // Save the information to local storage
+                    localStorage.setItem('userPairing', JSON.stringify(currentPairing));
+
+                    this.game_text.setText(`You got: ${chosenUserName}\nChosen: ${chosenUserName}`);
+                    alert(`You chose: ${chosenUserName}`);
+
+                    fetch('/save_pairing', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            chooserId: current_user.id,
+                            chosenUserId: idx, // Include the chosen user ID for backend storage
+                        }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                            // Handle the response, update the UI
+                        })
+                        .catch(error => {
+                            console.error("Error", error);
+                        });
+
+                    // Player can spin
+                    this.canSpin = true;
+                }
             }
         }
+
 
     </script>
 
