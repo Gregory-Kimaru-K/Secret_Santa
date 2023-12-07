@@ -1,306 +1,312 @@
 <html>
-<head>
+    <head>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE-edge">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='wheel_style.css') }}"/>
-    <title>
-        Spin - Win Game
-    </title> 
-    <style>
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #af0007;
-        }
-        canvas{
-            width:800px;
-            height: 800px;
-        }
-        #snow {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            pointer-events: none;
-            z-index: 1000;
-        }
-    
-    </style>
-</head>
-<body bgcolor="#AF0007"><div id="snow"></div>
-    <div class="wrapper">
-        <a href="{{ url_for('logout') }}" class="btn">Log out</a>
-    </div>
-
-    <script src="{{ url_for ('static', filename='JS/phaser.js') }}"></script>
-    <script>
-        //Hello World of Phaser = Basic Game = Single Scene in Spin & Win Game
-        //How to create the basic skeleton for the game -> Game Loop
-
-        var current_user = {{ current_user|tojson|safe }};
-        var users = {{ users|tojson|safe }};
-        var num_segments = {{ num_segments|tojson|safe }};
-
-
-        // Create an array of user names
-        let userNames = users.map(user => user.name);
-
-        let currentPairing = null;
-        let game;
-        if (!users || !Array.isArray(users) || users.length == 0) {
-            console.error("Invalid user data");
-        }
-        // Update prizes_config based on the user data
-        let prizes_config = {
-            count: num_segments,
-            prize_names: userNames,
-        };
-
-
-
-        let config = {
-            type : Phaser.CANVAS,
-            width : 900,
-            height: 900,
-            backgroundColor : 0xffcc00,
-            
-            scene : {
-                preload : preload,
-                create : create,
-                // update : update,
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="IE-edge">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='wheel_style.css') }}"/>
+        <title>
+            Spin - Win Game
+        </title> 
+        <style>
+            body {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                background-color: #af0007;
+            }
+            canvas{
+                width:800px;
+                height: 800px;
+            }
+            #snow {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                pointer-events: none;
+                z-index: 1000;
             }
         
-        };
-        game = new Phaser.Game(config);
+        </style>
+    </head>
+    <body bgcolor="#AF0007"><div id="snow"></div>
+        <div class="wrapper">
+            <a href="{{ url_for('logout') }}" class="btn">Log out</a>
+        </div>
 
-        function preload() {
-            console.log("Preload");
-            // Load image files
-            this.load.image('background', 'static/Assets/screen.jpg');
-            this.load.image('wheel', 'static/Assets/wheelin.png');
-            this.load.image('pin', 'static/Assets/pinin.png');
-            this.load.image('stand', 'static/Assets/stnd.png');
-        }
+        <script src="{{ url_for ('static', filename='JS/phaser.js') }}"></script>
+        <script>
+            //Hello World of Phaser = Basic Game = Single Scene in Spin & Win Game
+            //How to create the basic skeleton for the game -> Game Loop
 
-        function create(){
-            console.log("Create");
+            var current_user = {{ current_user|tojson|safe }};
+            var users = {{ users|tojson|safe }};
+            var num_segments = {{ num_segments|tojson|safe }};
+
+
+            // Create an array of user names
+            let userNames = users.map(user => user.name);
 
             let currentPairing = null;
+            let game;
+            if (!users || !Array.isArray(users) || users.length == 0) {
+                console.error("Invalid user data");
+            }
+            // Update prizes_config based on the user data
+            let prizes_config = {
+                count: num_segments,
+                prize_names: userNames,
+            };
 
-            //currentPairing intialization if stored in local storage
-            const storedPairing = localStorage.getItem('userPairing');
-            if (storedPairing) {
-                currentPairing = JSON.parse(storedPairing);
+
+
+            let config = {
+                type : Phaser.CANVAS,
+                width : 900,
+                height: 900,
+                backgroundColor : 0xffcc00,
+                
+                scene : {
+                    preload : preload,
+                    create : create,
+                    // update : update,
+                }
+            
+            };
+            game = new Phaser.Game(config);
+
+            function preload() {
+                console.log("Preload");
+                // Load image files
+                this.load.image('background', 'static/Assets/screen.jpg');
+                this.load.image('wheel', 'static/Assets/wheelin.png');
+                this.load.image('pin', 'static/Assets/pinin.png');
+                this.load.image('stand', 'static/Assets/stnd.png');
             }
 
-            //buttons
-            // <button onclick="spinwheel()">Click me</button>
-            // this.load.onClick('spinwheel();');
+            function create(){
+                console.log("Create");
 
-            //create the background image
-            let W = game.config.width;
-            let H = game.config.height;
-            
-            let background = this.add.sprite(0,0,'background');
-            background.setPosition(W/2,H/2);
-            background.setScale(0.18);
+                let currentPairing = null;
 
-            //lets create the stand
-            let stand = this.add.sprite(W/2,H/2,'stand');
-            stand.setScale(0.8);
-            
+                //currentPairing intialization if stored in local storage
+                const storedPairing = localStorage.getItem('userPairing');
+                if (storedPairing) {
+                    currentPairing = JSON.parse(storedPairing);
+                }
 
-            //lets create a pin
-            let pin = this.add.sprite(W/2,H/2,"pin");
-            pin.setScale(0.8);
-            pin.depth = 1;
-            
-            //let create wheel
-            this.wheel = this.add.sprite(W/2,H/2,"wheel");
-            this.wheel.setScale(0.215); 
-            //this.wheel.alpha = 0.5;
-            
-            
+                //buttons
+                // <button onclick="spinwheel()">Click me</button>
+                // this.load.onClick('spinwheel();');
 
-            // the game has just started = we can spin the wheel
-            this.canSpin = true;
-            
-            //event listener for mouse click
-            this.input.on("pointerdown",spinwheel,this);
-            
-            //lets create text object
-            font_style = {
-                font : "bold 40px Arial",
-                align : "center",
-                color : "white",
+                //create the background image
+                let W = game.config.width;
+                let H = game.config.height;
+                
+                let background = this.add.sprite(0,0,'background');
+                background.setPosition(W/2,H/2);
+                background.setScale(0.18);
+
+                //lets create the stand
+                let stand = this.add.sprite(W/2,H/2,'stand');
+                stand.setScale(0.8);
+                
+
+                //lets create a pin
+                let pin = this.add.sprite(W/2,H/2,"pin");
+                pin.setScale(0.8);
+                pin.depth = 1;
+                
+                //let create wheel
+                this.wheel = this.add.sprite(W/2,H/2,"wheel");
+                this.wheel.setScale(0.215); 
+                //this.wheel.alpha = 0.5;
+                
+                
+
+                // the game has just started = we can spin the wheel
+                this.canSpin = true;
+                
+                //event listener for mouse click
+                this.input.on("pointerdown",spinwheel,this);
+                
+                //lets create text object
+                font_style = {
+                    font : "bold 40px Arial",
+                    align : "center",
+                    color : "white",
+                }
+                this.game_text = this.add.text(50, 80, "🌟✨ click santa and let fate reveal 🎅🤶",font_style);
+                
+                
+                
             }
-            this.game_text = this.add.text(50, 80, "🌟✨ click santa and let fate reveal 🎅🤶",font_style);
-            
-            
-            
-        }
-        document.addEventListener('DOMContentLoaded', function(){
-            var script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
-            script.onload = function(){
-                particlesJS("snow", {
-                    "particles": {
-                        "number": {
-                            "value": 200,
-                            "density": {
-                                "enable": true,
-                                "value_area": 800
-                            }
-                        },
-                        "color": {
-                            "value": "#ffffff"
-                        },
-                        "opacity": {
-                            "value": 0.7,
-                            "random": false,
-                            "anim": {
-                                "enable": false
-                            }
-                        },
-                        "size": {
-                            "value": 5,
-                            "random": true,
-                            "anim": {
-                                "enable": false
-                            }
-                        },
-                        "line_linked": {
-                            "enable": false
-                        },
-                        "move": {
-                            "enable": true,
-                            "speed": 5,
-                            "direction": "bottom",
-                            "random": true,
-                            "straight": false,
-                            "out_mode": "out",
-                            "bounce": false,
-                            "attract": {
-                                "enable": true,
-                                "rotateX": 300,
-                                "rotateY": 1200
-                            }
-                        }
-                    },
-                    "interactivity": {
-                        "events": {
-                            "onhover": {
+            document.addEventListener('DOMContentLoaded', function(){
+                var script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
+                script.onload = function(){
+                    particlesJS("snow", {
+                        "particles": {
+                            "number": {
+                                "value": 200,
+                                "density": {
+                                    "enable": true,
+                                    "value_area": 800
+                                }
+                            },
+                            "color": {
+                                "value": "#ffffff"
+                            },
+                            "opacity": {
+                                "value": 0.7,
+                                "random": false,
+                                "anim": {
+                                    "enable": false
+                                }
+                            },
+                            "size": {
+                                "value": 5,
+                                "random": true,
+                                "anim": {
+                                    "enable": false
+                                }
+                            },
+                            "line_linked": {
                                 "enable": false
                             },
-                            "onclick": {
-                                "enable": false
-                            },
-                            "resize": false
-                        }
-                    },
-                    "retina_detect": true
-                });
-            }
-            document.head.append(script);
-        });
-        //Game Loop
-        // function update(){
-        //     console.log("Inside Update");
-        //     //this.wheel.angle += 1;
-        // }
+                            "move": {
+                                "enable": true,
+                                "speed": 5,
+                                "direction": "bottom",
+                                "random": true,
+                                "straight": false,
+                                "out_mode": "out",
+                                "bounce": false,
+                                "attract": {
+                                    "enable": true,
+                                    "rotateX": 300,
+                                    "rotateY": 1200
+                                }
+                            }
+                        },
+                        "interactivity": {
+                            "events": {
+                                "onhover": {
+                                    "enable": false
+                                },
+                                "onclick": {
+                                    "enable": false
+                                },
+                                "resize": false
+                            }
+                        },
+                        "retina_detect": true
+                    });
+                }
+                document.head.append(script);
+            });
+            //Game Loop
+            // function update(){
+            //     console.log("Inside Update");
+            //     //this.wheel.angle += 1;
+            // }
 
-        let chosen_user = new Set();
+            let chosen_user = new Set();
 
-        function spinwheel(check) {
-            // Check if there are available users to choose from
-            if (prizes_config.count <= 1) {
-                alert("No users available to be chosen.");
-                return;
-            }
-
-            // Check if all users have been chosen
-            if (chosen_user.size === prizes_config.count) {
-                alert("All users have been chosen.");
-                return;
-            }
-
-            // Check if the current user is already paired
-            if (currentPairing) {
-                alert(`You are already paired. You cannot spin again`);
-                return;
-            }
-
-            // Can we spin the wheel?
-            if (this.canSpin) {
-                // Player cannot spin
-                this.canSpin = false;
-
-                console.log("You clicked the mouse");
-                console.log("Start spinning");
-
-                let rounds = Phaser.Math.Between(2, 4);
-                let degrees = Phaser.Math.Between(0, 11) * 30;
-
-                let total_angle = rounds * 360 + degrees;
-                console.log(total_angle);
-
-                let idx = prizes_config.count - 1 - Math.floor(degrees / (360 / prizes_config.count));
-
-                // Check if the chosen user is already chosen
-                let chosenUserName = prizes_config.prize_names[idx];
-                if (chosen_user.has(chosenUserName)) {
-                    alert(`You have already chosen ${chosenUserName}.`);
-                    this.canSpin = true;
+            function spinwheel(check) {
+                // Check if there are available users to choose from
+                if (prizes_config.count <= 1) {
+                    alert("No users available to be chosen.");
                     return;
                 }
 
-                // Set current pairing
-                currentPairing = { name: chosenUserName, id: idx };
+                // Check if all users have been chosen
+                if (chosen_user.size === prizes_config.count) {
+                    alert("All users have been chosen.");
+                    return;
+                }
 
-                if (prizes_config.count > 0) {
-                    // Add the chosen user to the set
-                    chosen_user.add(chosenUserName);
+                // Check if the current user is already paired
+                if (currentPairing) {
+                    alert(`You are already paired. You cannot spin again`);
+                    return;
+                }
 
-                    // Save the information to local storage
-                    localStorage.setItem('userPairing', JSON.stringify(currentPairing));
+                // check if all users are paired. You cannot spin again
+                if (chosen_user.size === prizes_config.count - 1) {
+                    alert('All users are paired. You cannot spin the wheel. ');
+                    return;      
+                }
 
-                    this.game_text.setText(`You got: ${chosenUserName}\nChosen: ${chosenUserName}`);
-                    alert(`You chose: ${chosenUserName}`);
+                // Can we spin the wheel?
+                if (this.canSpin) {
+                    // Player cannot spin
+                    this.canSpin = false;
 
-                    fetch('/save_pairing', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            chooserId: current_user.id,
-                            chosenUserId: idx, // Include the chosen user ID for backend storage
-                        }),
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log(data);
-                            // Handle the response, update the UI
+                    console.log("You clicked the mouse");
+                    console.log("Start spinning");
+
+                    let rounds = Phaser.Math.Between(2, 4);
+                    let degrees = Phaser.Math.Between(0, 11) * 30;
+
+                    let total_angle = rounds * 360 + degrees;
+                    console.log(total_angle);
+
+                    let idx = prizes_config.count - 1 - Math.floor(degrees / (360 / prizes_config.count));
+
+                    // Check if the chosen user is already chosen
+                    let chosenUserName = prizes_config.prize_names[idx];
+                    if (chosen_user.has(chosenUserName)) {
+                        alert(`You have already chosen ${chosenUserName}.`);
+                        this.canSpin = true;
+                        return;
+                    }
+
+                    // Set current pairing
+                    currentPairing = { name: chosenUserName, id: idx };
+
+                    if (prizes_config.count > 0) {
+                        // Add the chosen user to the set
+                        chosen_user.add(chosenUserName);
+
+                        // Save the information to local storage
+                        localStorage.setItem('userPairing', JSON.stringify(currentPairing));
+
+                        this.game_text.setText(`You got: ${chosenUserName}\nChosen: ${chosenUserName}`);
+                        alert(`You chose: ${chosenUserName}`);
+
+                        fetch('/save_pairing', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                chooserId: current_user.id,
+                                chosenUserId: idx, // Include the chosen user ID for backend storage
+                            }),
                         })
-                        .catch(error => {
-                            console.error("Error", error);
-                        });
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log(data);
+                                // Handle the response, update the UI
+                            })
+                            .catch(error => {
+                                console.error("Error", error);
+                            });
 
-                    // Player can spin
-                    this.canSpin = true;
+                        // Player can spin
+                        this.canSpin = true;
+                    }
                 }
             }
-        }
 
 
-    </script>
+        </script>
 
-</body>
+    </body>
 
 </html>
