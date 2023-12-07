@@ -32,7 +32,7 @@ class User(db.Model, UserMixin):
     name = db.Column(db.String(100), nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    chosen_by = db.relationship('Pairing', foreign_keys='Pairing.chosen_id', backref='chosen_user', lazy='dynamic')
+    # chosen_by = db.relationship('Pairing', foreign_keys='Pairing.chosen_id', backref='chosen_user', lazy='dynamic')
 
     @property
     def password(self):
@@ -44,11 +44,14 @@ class User(db.Model, UserMixin):
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    def get_pairing(self):
+        return Pairing.query.filter_by(chooser_id=self.id).all()
 
 class Pairing(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     chooser_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    chosen_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    chosen_id = db.Column(db.Integer, unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class CustomJSONEncoder(flask_json.JSONEncoder):
@@ -97,10 +100,10 @@ def register():
                 flash("Password must be more than 7 characters\n", 'error')
             
             if not any(char.isalpha() for char in password):
-                flash("Pass should contain character to make it more secure\n", 'error')
+                flash("Password should contain  to make it more secure\n", 'error')
             
             if not any(char.isdigit() for char in password):
-                flash("Pass should contain character to make it more secure\n", 'error')
+                flash("Password should contain numbers to make it more secure\n", 'error')
 
         else:
             new_user = User(name=name, password=password)
@@ -217,4 +220,5 @@ if __name__ == '__main__':
         db.create_all()
         # Enable HTTPS SSl (For testing not production)
 
-        app.run(debug=False, host="0.0.0.0", port=5000)
+        # app.run(debug=False, host="0.0.0.0", port=5000)
+        app.run(debug=True)
