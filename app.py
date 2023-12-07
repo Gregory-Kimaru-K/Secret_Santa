@@ -196,6 +196,9 @@ def save_pairing():
     #check if chosn user has already been chosen
     if chosen_id in chosen_users:
         return jsonify({"error": "Chosen user has already been chosen"})
+    
+    if chosen_id == chooser_id:
+        return jsonify({"error": "User cannot choose themselves"})
 
     #add chosen person to list of users
     chosen_users.add(chosen_id)
@@ -220,5 +223,5 @@ if __name__ == '__main__':
         db.create_all()
         # Enable HTTPS SSl (For testing not production)
 
-        # app.run(debug=False, host="0.0.0.0", port=5000)
-        app.run(debug=True)
+        app.run(debug=False, host="0.0.0.0", port=5000)
+        # app.run(debug=True)

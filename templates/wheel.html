@@ -208,52 +208,48 @@
 
         let chosen_user = new Set();
 
-        function spinwheel(check){
-
-            //check if there are available users to choose from
+        function spinwheel(check) {
+            // Check if there are available users to choose from
             if (prizes_config.count <= 1) {
-                alert ("No users available to chosen.");
+                alert("No users available to be chosen.");
                 return;
             }
 
-            //Check if all users have benn chosen
+            // Check if all users have been chosen
             if (chosen_user.size === prizes_config.count) {
-                alert("All users have been chosen.")
+                alert("All users have been chosen.");
                 return;
             }
 
-            // can we spin the wheel?
-            if(this.canSpin){
-
-                //player cannot spin 
-                this.canSpin=false;
+            // Can we spin the wheel?
+            if (this.canSpin) {
+                // Player cannot spin
+                this.canSpin = false;
 
                 console.log("You clicked the mouse");
                 console.log("Start spinning");
-                //this.game_text.setText("You clicked the mouse!");
-                
-                let rounds = Phaser.Math.Between(2,4);
-                let degrees = Phaser.Math.Between(0,11)*30;
-                
-                let total_angle = rounds*360 + degrees;
+
+                let rounds = Phaser.Math.Between(2, 4);
+                let degrees = Phaser.Math.Between(0, 11) * 30;
+
+                let total_angle = rounds * 360 + degrees;
                 console.log(total_angle);
-                
-                let idx = prizes_config.count - 1 - Math.floor(degrees/(360/prizes_config.count));
-                
-                
+
+                let idx = prizes_config.count - 1 - Math.floor(degrees / (360 / prizes_config.count));
+
                 tween = this.tweens.add({
                     targets: this.wheel,
-                    angle: total_angle, 
+                    angle: total_angle,
                     ease: "Cubic.easeOut",
                     duration: 6000,
-                    callbackScope:this,
-                    onComplete:function(){
-
+                    callbackScope: this,
+                    onComplete: function () {
                         if (prizes_config.count > 0) {
-                            chosen_user = prizes_config.prize_names[idx];
-                            this.game_text.setText("You got : " + prizes_config.prize_names[idx] + "\nChosen:" + chosen_user);
-                        
-                            alert('You chose:' + chosen_user);
+                            // Add the chosen user to the set
+                            chosen_user.add(prizes_config.prize_names[idx]);
+                            this.game_text.setText("You got: " + prizes_config.prize_names[idx] + "\nChosen: " + prizes_config.prize_names[idx]);
+
+                            alert('You chose: ' + prizes_config.prize_names[idx]);
 
                             fetch('/save_pairing', {
                                 method: 'POST',
@@ -261,23 +257,22 @@
                                     'Content-Type': 'application/json',
                                 },
                                 body: JSON.stringify({
-                                    chooserId: current_user.id, 
+                                    chooserId: current_user.id,
                                 }),
                             })
-                            .then(response => response.json())
-                            .then(data => {
-                            console.log(data);
-                            //handle the response, update the UI 
-                            })
-                            .catch(error=>{
-                                console.error("Error", error);
-                            });
+                                .then(response => response.json())
+                                .then(data => {
+                                    console.log(data);
+                                    // Handle the response, update the UI
+                                })
+                                .catch(error => {
+                                    console.error("Error", error);
+                                });
+                        } else {
+                            alert("No users available to be chosen.");
                         }
-                        else {
-                            alert ("No users available to be chosen")
-                        }
-                        //Player can spin
-                        this.canSpin=true;
+                        // Player can spin
+                        this.canSpin = true;
                     },
                 });
             }
