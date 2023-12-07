@@ -69,10 +69,13 @@ def load_user(user_id):
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+
     if request.method == 'POST':
+
         name = request.form.get('name')
         password = request.form.get('password')
         confirmpassword =request.form.get('confirmpassword')
+
 
         if len(name) < 14:
             flash('Error: Name must be atleast 14 characters long', 'error')
@@ -130,7 +133,8 @@ def login():
             else:
                 flash('Incorrect password. Please try again.\n', 'error')
         else:
-            flash('User not found. Please register or check the email.\n', 'error')
+            flash('User not found.\nPlease register\n', 'error')
+            return redirect(url_for('register'))
 
     return render_template('login.html')
 
@@ -213,4 +217,4 @@ if __name__ == '__main__':
         db.create_all()
         # Enable HTTPS SSl (For testing not production)
 
-        app.run(host="0.0.0.0", port=5000)
+        app.run(debug=False, host="0.0.0.0", port=5000)
