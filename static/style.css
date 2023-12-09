@@ -1,140 +1,204 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;600;700;800;900&display=swap");
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Poppins", sans-serif;
-}
-
+@import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap");       
+@import url("https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&display=swap");
 body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: url('/static/img4.jfif') no-repeat;
-    background-size: cover;
-    background-position: center;
-}
-
-.wrapper {
-    width: 420px;
-    background: transparent;
-    border: 2px solid rgba(255, 255, 255, .2);
-    backdrop-filter: blur(20px);
-    box-shadow: 0 0 10px rgba(0, 0, 0, .2);
-    color: #fff;
-    border-radius: 10px;
-    padding: 30px 40px;
-}
-
-.wrapper h1 {
-    font-size: 36px;
-    text-align: center;
-}
-
-.wrapper .input-box {
-    position: relative;
-    width: 100%;
-    height: 50px;
-    margin: 30px 0;
-}
-
-.input-box input {
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    border: 2px solid rgba(255, 255, 255, .2);
-    border-radius: 40px;
-    font-size: 16px;
-    color: #fff;
-    padding: 20px 45px 20px 20px;
-}
-
-.input-box input::placeholder{
-    color: #fff;
-}
-
-.input-box i {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #2c3e50; /* Dark blue background color */
+            overflow: hidden;
+            font-family: 'Amatic SC', cursive;
+        }
+        .bottom-right-image {
     position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 20px;
+    bottom: 0;
+    right: 0;
+    width: 20%;
+    height: auto;
+    border-radius: 0 15px 0 0;
+    filter: drop-shadow(0 4px 4px rgba(231, 76, 60, 0.8)); /* Red drop shadow */
+    animation: tilt 2s infinite alternate;
 }
 
-.wrapper .remember-forget {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14.5px;
-    margin: -15px 0 15px;
-}
+        span {
+            color: #e74c3c; /* Red text color */
+            font-weight: 700;
+        }
 
-.remember-forget label input {
-    accent-color: #fff;
-    margin-right: 3px;
-}
+        .image-container {
+            position: relative;
+            width: 90%;
+            height: 80%;
+            max-width: 1110px;
+            background-color: #974747; /* Green background color */
+            overflow: hidden;
+            border-radius: 15px;
+        }
 
-.remember-forget a {
-    color: #fff;
-    text-decoration: none;
+        .register, .login {
+            position: absolute;
+            border-radius: 15px;
+            border: 1px solid #c0392b; /* Dark red border color */
+        }
 
-}
+        .login p {
+            bottom: 10%;
+            left: 10%;
+            letter-spacing: .2em;
+            font-size: 2.5vh;
+            font-weight: 800;
+            position: absolute;
+        }
 
-.remember-forget a:hover {
-    text-decoration: underline;
-}
+        .register {
+            top: 9.6%;
+            left: 41.7%;
+            width: 23.1%;
+            height: 60.2%;
+            background-image: url('/static/img/register.png');
+            background-position: top;
+            background-repeat: no-repeat;
+        }
 
-.wrapper .btn {
-    width: 100%;
-    height: 45px;
-    background-color: #fff;
-    border: none;
-    outline: none;
-    border-radius: 40px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
-    cursor: pointer;
-    font-size: 10px;
-    color: #333;
-    font-weight: 600;
-    font-size: 20px;
-    transition: 0.5s ease-in-out;
-}
+        .texthead {
+            position: absolute;
+            top: 4.6%;
+            left: 3.7%;
+            width: 40.1%;
+            height: 60.2%;
+            font-size: 2.5vh;
+            letter-spacing: .2em;
+            color: #ffffff; /* White text color */
+        }
 
-.wrapper .btn:hover{
-    transform: scale(1.1);
-}
+        .login {
+            top: 29.6%;
+            left: 10.7%;
+            width: 23.1%;
+            height: 30.2%;
+            background-image: url('/static/img/login.png');
+            background-position: top;
+            background-repeat: no-repeat;
+        }
 
-.wrapper .btn:active{
-    transform: scale(1.2);
-    font-size: 25px;
-    background-color: aqua;
-}
+        .aesthetic-text {
+            position: absolute;
+            letter-spacing: .2em;
+            top: 29.6%;
+            left: 70.7%;
+            width: 23.1%;
+            height: 60.2%;
+            font-size: 2.5vh;
+            color: #ffffff; /* White text color */
+            font-family: 'Dancing Script', cursive;
+        }
 
-.wrapper .register-link {
-    font-size: 14.5px;
-    text-align: center;
-    margin: 20px 0 15px;
-}
+        .aesthetic-text::before,
+        .aesthetic-text::after {
+            conten    .bottom-right-image {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20%; /* Set the width of the image as a percentage */
+            height: auto;
+            border-radius: 0 15px 0 0; /* Adjust the border-radius for curved edges on the bottom right */
+            animation: tilt 2s infinite alternate;        }t: "❄✩❄✩";
+            position: absolute;
+            left: 50%;
+            color: #e74c3c; /* Red color */
+            font-size: 10px;
+            animation: snowfall 5s infinite linear;
+        }
 
-.register-link p a {
-    color: #fff;
-    text-decoration: none;
-    font-weight: 600;
-    width: 10px;
-    height: 10px;
-    transition: 0.5s ease-in-out;
-}
+        /* Add these styles to your existing CSS */
+        .wrapper {
+            max-width: 400px;
+            position: absolute;
+            bottom: 5%;
+            left: 2%;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
 
-.register-link p a:hover {
-    text-decoration: underline;
-}
+        .alert {
+            margin-bottom: 15px;
+        }
 
-.register-link p a:active {
+        h1 {
+            font-size: 2.5vh;
+            color: #333; /* Dark text color */
+        }
 
-    font-size: 20px;
-    text-decoration: underline;
-}
+        .input-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
 
+        .input-box input {
+            width: 90%;
+            padding: 10px;
+            font-size: 1.5vh;
+            background-color: transparent;
+            border: 1px solid #c0392b; /* Dark red border color */
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .input-box i {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            color: #777; /* Light icon color */
+        }
+
+        .btn {
+            background-color: #4CAF50; /* Green button color */
+            color: #fff; /* White text color */
+            padding: 10px 20px;
+            font-size: 1.6vh;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #45a049; /* Darker green on hover */
+        }
+
+        .register-link {
+            margin-top: 20px;
+        }
+
+        .register-link a {
+            color: #0c0a09; /* Green link color */
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline; /* Underline on hover */
+        }
+
+        @keyframes tilt {
+            0% {
+                transform: rotate(-10deg);
+            }
+            50% {
+                transform: rotate(10deg);
+            }
+            100% {
+                transform: rotate(-10deg);
+            }
+        }
+
+        @keyframes snowfall {
+            to {
+                transform: translateY(70vh);
+            }
+        }

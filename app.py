@@ -116,7 +116,7 @@ def register():
 
             return redirect (url_for('wheel'))
 
-    return render_template('register.html')
+    return render_template('loginregister.html')
 
 
 @app.route('/')
@@ -151,7 +151,7 @@ def login():
 
         return redirect(url_for('register'))
 
-    return render_template('login.html')
+    return render_template('loginregister.html')
 
 @app.route('/user')
 @login_required
