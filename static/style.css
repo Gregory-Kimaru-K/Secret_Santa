@@ -218,7 +218,6 @@ body {
         width: 100%;
         max-width: 400px; /* Adjust the maximum width as needed */
         margin: 20px;
-        display: none;
     }
 
     #loginWrapper.active,
