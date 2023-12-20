@@ -1,3 +1,4 @@
+app.py 
 from flask import Flask, render_template, redirect, url_for, request, flash, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -33,7 +34,6 @@ class User(db.Model, UserMixin):
     name = db.Column(db.String(100), nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    chosen_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     # chosen_by = db.relationship('Pairing', foreign_keys='Pairing.chosen_id', backref='chosen_user', lazy='dynamic')
 
     @property
@@ -180,19 +180,12 @@ def internal_error(error):
 @login_required
 def wheel():
     users = User.query.all()
+    users_data = [{'id': user.id, 'name': user.name} for user in users]
     num_segments = len(users)
-    # convert current_user to a serialized form because local proxy cannot directly serialize to JSON
+    # convert current_user to a serialized for mainly because local proxy cannot directly serialize to JSON
     current_user_data = {'id': current_user.id, 'name': current_user.name}
 
-    # Check if the current user is already paired
-    current_pairing = Pairing.query.filter_by(chooser_id=current_user.id).first()
-    if current_pairing:
-        return render_template('wheel_paired.html', current_user=current_user_data, chosen_user=current_pairing.chosen_user)
-
-    return render_template('wheel.html', users=users, num_segments=num_segments, current_user=current_user_data)
-
-def is_user_paired(user_id):
-    return Pairing.query.filter_by(chooser_id=user_id).first() is not None
+    return render_template('wheel.html', users=users_data, num_segments=num_segments, current_user=current_user_data)
 
 @app.route("/save_pairing", methods=['POST'])
 @login_required
@@ -201,42 +194,35 @@ def save_pairing():
 
     chooser_id = data.get('chooserId')
 
-    # Check if the chooser is already paired
-    if is_user_paired(chooser_id):
-        return jsonify({"error": "You are already paired"})
+   #Check if the chooser has made a choice
+    existing_pairing = Pairing.query.filter_by(chooser_id=chooser_id).first()
+    if existing_pairing:
+        return jsonify({"error": "Chooser has already made choice"})
 
-    # Check if all users are paired
-    all_users_paired = len(Pairing.query.all()) == len(User.query.all()) - 1
-    if all_users_paired:
-        return jsonify({"error": "All users are already paired"})
-
-    # Get a list of all users excluding the chooser
+    #Get a list of all users excluding the chooser
     all_users_except_chooser = User.query.filter(User.id != chooser_id).all()
 
-    # Randomly select a user from the list as the chosen one
+    #randomly select a user from the list as the chosen one
     chosen_user = choice(all_users_except_chooser)
     chosen_id = chosen_user.id
-
-    # Check if chosen user has already been chosen
-    while is_user_paired(chosen_id):
-        chosen_user = choice(all_users_except_chooser)
-        chosen_id = chosen_user.id
-
-    # Check if the chosen user is the current user
+  
+    #check if chosn user has already been chosen
+    if chosen_id in chosen_users:
+        return jsonify({"error": "Chosen user has already been chosen"})
+    
     if chosen_id == chooser_id:
         return jsonify({"error": "User cannot choose themselves"})
 
-    # Update the User model to store the chosen_by information
-    chosen_user.chosen_by_id = chooser_id
-    db.session.commit()
+    #add chosen person to list of users
+    chosen_users.add(chosen_id)
 
     new_pairing = Pairing(chooser_id=chooser_id, chosen_id=chosen_id)
     db.session.add(new_pairing)
     db.session.commit()
 
     print("Pairing saved successfully.")
-
-    return jsonify({"success": "Pairing saved successfully", "chosenUserId": chosen_id, "chosenUserName": chosen_user.name})
+    
+    return jsonify ({"success": "Pairing saved successfully"})
 
 #Display the current pairings
 @app.route("/pairings")

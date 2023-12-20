@@ -1,327 +1,240 @@
-<html>
-    <head>
+app.py 
+from flask import Flask, render_template, redirect, url_for, request, flash, Blueprint
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_cors import CORS
+import secrets
+import logging
+from datetime import datetime
+import random 
+from random import choice
+from flask import jsonify
+import json as flask_json
+from sqlalchemy import func
 
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="X-UA-Compatible" content="IE-edge">
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='wheel_style.css') }}"/>
-        <title>
-            Spin - Win Game
-        </title> 
-        <style>
-            body {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                height: 100vh;
-                margin: 0;
-                background-color: #af0007;
-            }
-            canvas{
-                width:800px;
-                height: 800px;
-            }
-            #snow {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                pointer-events: none;
-                z-index: 1000;
-            }
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = secrets.token_hex(16)  # Updated secret key
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+# Enable CORS for specific origins
+CORS(app)
+
+# Set up Flask-Login
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'  # login route
+
+# Define User model with UserMixin for Flask-Login
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # chosen_by = db.relationship('Pairing', foreign_keys='Pairing.chosen_id', backref='chosen_user', lazy='dynamic')
+
+    @property
+    def password(self):
+        raise AttributeError('Password is not a readable attribute.')
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+    def get_pairing(self):
+        return Pairing.query.filter_by(chooser_id=self.id).all()
+
+class Pairing(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    chooser_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    chosen_id = db.Column(db.Integer, unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class CustomJSONEncoder(flask_json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, User):
+            #return a dictionary of User attributes
+            return {'id': obj.id, 'name':obj.name}
+        return super().default(obj)
+    
+app.json_encoder = flask_json.JSONEncoder
+
+#Maintaining set to store chosen user IDs
+chosen_users = set()
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.query(User).get(int(user_id))
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+
+    if request.method == 'POST':
+
+        name = request.form.get('name')
+        password = request.form.get('password')
+        confirmpassword =request.form.get('confirmpassword')
+
+
+        if len(name) < 14:
+            flash('Error: Name must be atleast 14 characters long', 'error')
+            return redirect(url_for('register'))
+
+        existing_user = User.query.filter_by(name=name).first()
+
+
+        if existing_user:
+            flash('Account already exists.\n Please use a different name or log in.', 'error')
+            return redirect(url_for('register')) 
+               
+        if password != confirmpassword:
+            flash('Error password don\'t match', 'error')
+            return redirect(url_for('register'))
         
-        </style>
-    </head>
-    <body bgcolor="#AF0007"><div id="snow"></div>
-        <div class="wrapper">
-            <a href="{{ url_for('logout') }}" class="btn">Log out</a>
-        </div>
-
-        <script src="{{ url_for ('static', filename='JS/phaser.js') }}"></script>
-        <script>
-            //Hello World of Phaser = Basic Game = Single Scene in Spin & Win Game
-            //How to create the basic skeleton for the game -> Game Loop
-
-            var current_user = {{ current_user|tojson|safe }};
-            var users = {{ users|tojson|safe }};
-            var num_segments = {{ num_segments|tojson|safe }};
-
-
-            // Create an array of user names
-            let userNames = users.map(user => user.name);
-
-            let currentPairing = null;
-            let game;
-            if (!users || !Array.isArray(users) || users.length == 0) {
-                console.error("Invalid user data");
-            }
-            // Update prizes_config based on the user data
-            let prizes_config = {
-                count: num_segments,
-                prize_names: userNames,
-            };
-
-
-
-            let config = {
-                type : Phaser.CANVAS,
-                width : 900,
-                height: 900,
-                backgroundColor : 0xffcc00,
-                
-                scene : {
-                    preload : preload,
-                    create : create,
-                    update : update,
-                }
+        if len(password) < 7 or not any(char.isalpha() for char in password) or not any(char.isdigit() for char in password):
+            if len(password) < 7:
+                flash("Password must be more than 7 characters\n", 'error')
             
-            };
-            game = new Phaser.Game(config);
+            if not any(char.isalpha() for char in password):
+                flash("Password should contain  to make it more secure\n", 'error')
+            
+            if not any(char.isdigit() for char in password):
+                flash("Password should contain numbers to make it more secure\n", 'error')
 
-            function preload() {
-                console.log("Preload");
-                // Load image files
-                this.load.image('background', 'static/Assets/screen.jpg');
-                this.load.image('wheel', 'static/Assets/wheelin.png');
-                this.load.image('pin', 'static/Assets/pinin.png');
-                this.load.image('stand', 'static/Assets/stnd.png');
-            }
+        else:
+            new_user = User(name=name, password=password)
+            db.session.add(new_user)
+            db.session.commit()
 
-            function create() {
-                console.log("Create");
+            flash('Registration successful! You can now log in.\n', 'success')
+            login_user(new_user)
 
-                let currentPairing = null;
+            return redirect (url_for('wheel'))
 
-                // currentPairing initialization if stored in local storage
-                const storedPairing = localStorage.getItem('userPairing');
-                if (storedPairing) {
-                    currentPairing = JSON.parse(storedPairing);
-                }
-
-                // buttons
-                // <button onclick="spinwheel()">Click me</button>
-                // this.load.onClick('spinwheel();');
-
-                // create the background image
-                let W = game.config.width;
-                let H = game.config.height;
-
-                let background = this.add.sprite(0, 0, 'background');
-                background.setPosition(W / 2, H / 2);
-                background.setScale(0.18);
-
-                // lets create the stand
-                let stand = this.add.sprite(W / 2, H / 2, 'stand');
-                stand.setScale(0.8);
-
-                // lets create a pin
-                let pin = this.add.sprite(W / 2, H / 2, "pin");
-                pin.setScale(0.8);
-                pin.depth = 1;
-
-                // let create wheel
-                this.wheel = this.add.sprite(W / 2, H / 2, "wheel");
-                this.wheel.setScale(0.215);
-                // this.wheel.alpha = 0.5;
-
-                // event listener for mouse click
-                this.input.on("pointerdown", function (pointer) {
-                    if (this.wheel.getBounds().contains(pointer.x, pointer.y)) {
-                        spinwheel(this);
-                    } // 'this' refers to the scene object
-                }, this);
-
-                // the game has just started = we can spin the wheel
-                this.canSpin = true;
-
-                // lets create text object
-                font_style = {
-                    font: "bold 40px Arial",
-                    align: "center",
-                    color: "white",
-                };
-                this.game_text = this.add.text(50, 80, "🌟✨ click santa and let fate reveal 🎅🤶", font_style);
-                
-                
-            // Show alert if the user is already paired
-            if (current_user.chosen_by_id) {
-                alert(`You are already paired with ${current_user.chosen_by.name}`);
-            }
-        }
-                
-                
-            document.addEventListener('DOMContentLoaded', function(){
-                var script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
-                script.onload = function(){
-                    particlesJS("snow", {
-                        "particles": {
-                            "number": {
-                                "value": 200,
-                                "density": {
-                                    "enable": true,
-                                    "value_area": 800
-                                }
-                            },
-                            "color": {
-                                "value": "#ffffff"
-                            },
-                            "opacity": {
-                                "value": 0.7,
-                                "random": false,
-                                "anim": {
-                                    "enable": false
-                                }
-                            },
-                            "size": {
-                                "value": 5,
-                                "random": true,
-                                "anim": {
-                                    "enable": false
-                                }
-                            },
-                            "line_linked": {
-                                "enable": false
-                            },
-                            "move": {
-                                "enable": true,
-                                "speed": 5,
-                                "direction": "bottom",
-                                "random": true,
-                                "straight": false,
-                                "out_mode": "out",
-                                "bounce": false,
-                                "attract": {
-                                    "enable": true,
-                                    "rotateX": 300,
-                                    "rotateY": 1200
-                                }
-                            }
-                        },
-                        "interactivity": {
-                            "events": {
-                                "onhover": {
-                                    "enable": false
-                                },
-                                "onclick": {
-                                    "enable": false
-                                },
-                                "resize": false
-                            }
-                        },
-                        "retina_detect": true
-                    });
-                }
-                document.head.append(script);
-            });
-            //Game Loop
-            function update(){
-                if (this.wheel){
-                    console.log("Inside Update");
-                    this.wheel.angle += 1;
-                }
-            }
-
-            let chosen_user = new Set();
-
-            function spinwheel(scene) {
-
-                // Check if there are available users to choose from
-                if (prizes_config.count <= 1) {
-                    alert("No users available to be chosen.");
-                    return;
-                }
-
-                // Check if all users have been chosen
-                if (chosen_user.size === prizes_config.count) {
-                    alert("All users have been chosen.");
-                    return;
-                }
-
-                // Check if the current user is already paired
-                if (currentPairing) {
-                    alert(`You are already paired. You cannot spin again`);
-                    return;
-                }
-
-                // check if all users are paired. You cannot spin again
-                if (chosen_user.size === prizes_config.count - 1) {
-                    alert('All users are paired. You cannot spin the wheel. ');
-                    return;
-                }
-
-                // Can we spin the wheel?
-                if (scene.canSpin) {
-                    // Player cannot spin
-                    scene.canSpin = false;
-
-                    console.log("You clicked the mouse");
-                    console.log("Start spinning");
-
-                    let rounds = Phaser.Math.Between(2, 4);
-                    let degrees = Phaser.Math.Between(0, 11) * 30;
-
-                    let total_angle = rounds * 360 + degrees;
-                    console.log(total_angle);
-
-                    let idx = prizes_config.count - 1 - Math.floor(degrees / (360 / prizes_config.count));
-
-                    // Check if the chosen user is already chosen
-                    let chosenUserName = prizes_config.prize_names[idx];
-                    if (chosen_user.has(chosenUserName)) {
-                        alert(`You have already chosen ${chosenUserName}.`);
-                        scene.canSpin = true;
-                        return;
-                    }
-
-                    // Check if the chosen user is the current user
-                    if (chosenUserName === current_user.name) {
-                        alert("You cannot select yourself.");
-                        scene.canSpin = true;
-                        return;
-                    }
-
-                    // Set current pairing
-                    currentPairing = { name: chosenUserName, id: idx };
-
-                    if (prizes_config.count > 0) {
-                        // send the information to the server
-                        fetch('/save_pairing', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                chooserId: current_user.id,
-                                chosenUserId: idx, // Include the chosen user ID for backend storage
-                            }),
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log(data);
-                            // Handle the response, update the UI
-                            if (data.success) {
-                                // Update the UI to show the chosen user
-                                if (data.chosenUserId === null) {
-                                    scene.game_text.setText(`You got: ${chosenUserName}\nYou can choose this user`);
-                                } else {
-                                    scene.game_text.setText(`You got: ${chosenUserName}\nChosen by: ${data.chosenUserName}`);
-                                }
-                            } else {
-                                // Handle errors from the server
-                                alert(data.error);
-                            }
-                        })
-                        .catch(error => {
-                            console.error("Error", error);
-                        });
-                    }
-                }
-            }
+    return render_template('register.html')
 
 
-        </script>
-    </body>
+@app.route('/')
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        password = request.form.get('password')
 
-</html>
+        print(f"Entered username: {name}")
+        print(f"Entered password: {password}")
+
+        user = User.query.filter_by(name=name).first()
+
+        if user:
+            # User found, check password
+            print(f"User found: {user.name}")
+
+            if user.verify_password(password):
+                login_user(user)
+                flash(f'Welcome back, {user.name}! Login successful!\n', 'success')
+                return redirect(url_for('user'))
+            else:
+                flash('Incorrect password. Please try again.\n', 'error')
+                print("Incorrect password")
+        else:
+            flash('User not found.\nPlease register\n', 'error')
+            print("User not found")
+
+        # Add this line to see the entered username and password in the console
+        print(f"Entered username: {name}, Entered password: {password}")
+
+        return redirect(url_for('register'))
+
+    return render_template('login.html')
+
+@app.route('/user')
+@login_required
+def user():
+    return redirect(url_for('wheel'))
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Logout successful!', 'success')
+    return redirect(url_for('login'))
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    logging.error(f"Internal Server Error: {error}")
+    return render_template('500.html'), 500
+
+@app.route('/wheel')
+@login_required
+def wheel():
+    users = User.query.all()
+    users_data = [{'id': user.id, 'name': user.name} for user in users]
+    num_segments = len(users)
+    # convert current_user to a serialized for mainly because local proxy cannot directly serialize to JSON
+    current_user_data = {'id': current_user.id, 'name': current_user.name}
+
+    return render_template('wheel.html', users=users_data, num_segments=num_segments, current_user=current_user_data)
+
+@app.route("/save_pairing", methods=['POST'])
+@login_required
+def save_pairing():
+    data = request.get_json()
+
+    chooser_id = data.get('chooserId')
+
+   #Check if the chooser has made a choice
+    existing_pairing = Pairing.query.filter_by(chooser_id=chooser_id).first()
+    if existing_pairing:
+        return jsonify({"error": "Chooser has already made choice"})
+
+    #Get a list of all users excluding the chooser
+    all_users_except_chooser = User.query.filter(User.id != chooser_id).all()
+
+    #randomly select a user from the list as the chosen one
+    chosen_user = choice(all_users_except_chooser)
+    chosen_id = chosen_user.id
+  
+    #check if chosn user has already been chosen
+    if chosen_id in chosen_users:
+        return jsonify({"error": "Chosen user has already been chosen"})
+    
+    if chosen_id == chooser_id:
+        return jsonify({"error": "User cannot choose themselves"})
+
+    #add chosen person to list of users
+    chosen_users.add(chosen_id)
+
+    new_pairing = Pairing(chooser_id=chooser_id, chosen_id=chosen_id)
+    db.session.add(new_pairing)
+    db.session.commit()
+
+    print("Pairing saved successfully.")
+    
+    return jsonify ({"success": "Pairing saved successfully"})
+
+#Display the current pairings
+@app.route("/pairings")
+@login_required
+def pairings():
+    pairings = Pairing.query.all()
+    return render_template("pairings.html", pairings=pairings)
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+        # Enable HTTPS SSl (For testing not production)
+
+        # app.run(debug=False, host="0.0.0.0", port=5000)
+        app.run(debug=True)
