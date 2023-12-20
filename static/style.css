@@ -203,8 +203,6 @@ body {
             }
         }
 
-/* Your existing styles */
-
 /* Additional styles for small devices */
 @media screen and (max-width: 600px) {
     .login-register {
@@ -214,21 +212,39 @@ body {
         position: relative;
     }
 
+    .image-container {
+        width: 70%; /* Adjust the width as needed */
+        max-width: 100%;
+        margin: 20px auto;
+        position: relative;
+    }
+
+    .texthead {
+        position: absolute;
+        top: 5%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        font-size: 2.5vh;
+        letter-spacing: .2em;
+        color: #ffffff;
+        text-align: center; /* Center the text */
+    }
+
     #loginWrapper,
     #registerWrapper {
-        width: 90%;
-        max-width: 400px; 
+        width: 70%; /* Adjust the width as needed */
+        max-width: 100%;
         margin: 20px auto;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        position: relative;
+        display: none; /* Hide the forms initially */
     }
 
     #loginWrapper.active,
     #registerWrapper.active {
         display: block;
     }
+
     .aesthetic-text {
         position: absolute;
         letter-spacing: .2em;
@@ -239,15 +255,5 @@ body {
         color: #ffffff;
         font-family: 'Dancing Script', cursive;
     }
-
-    .texthead {
-        position: absolute;
-        top: 5%;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        font-size: 2.5vh;
-        letter-spacing: 2.5vh;
-        color: #ffffff;
-    }
 }
+
