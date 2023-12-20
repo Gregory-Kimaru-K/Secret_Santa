@@ -203,26 +203,26 @@ body {
             }
         }
 
-/* Default styles for larger screens */
-.login,
-.register {
-    display: flex;
-}
+/* Your existing styles */
 
-/* Media query for small devices */
+/* Additional styles for small devices */
 @media screen and (max-width: 600px) {
-    /* Hide registration form by default on small screens */
-    .register {
+    .login-register {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #loginWrapper,
+    #registerWrapper {
+        width: 100%;
+        max-width: 400px; /* Adjust the maximum width as needed */
+        margin: 20px;
         display: none;
     }
 
-    /* Show registration form when the screen is small and the registerWrapper is active */
-    #registerWrapper {
-        display: block !important;
-    }
-
-    /* Hide login form when the screen is small */
-    #loginWrapper {
-        display: none !important;
+    #loginWrapper.active,
+    #registerWrapper.active {
+        display: block;
     }
 }
