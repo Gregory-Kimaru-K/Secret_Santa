@@ -225,8 +225,8 @@ body {
     }
 
     .register, .login {
-        width: 70%;
-        height: 30%;
+        width: 80%;
+        height: 25%;
         top: auto;
         left: 50%;
         transform: translateX(-50%);
@@ -241,8 +241,8 @@ body {
     .login p, .aesthetic-text {
         position: static;
         width: 90%;
-        font-size: 2.5vh;
-        letter-spacing: .2em;
+        font-size: 2vh;
+        letter-spacing: .1em;
         color: #ffffff;
         text-align: center;
         margin: 10px auto;
@@ -253,7 +253,7 @@ body {
         position: static;
         left: auto;
         color: #e74c3c;
-        font-size: 10px;
+        font-size: 8px;
         animation: none;
     }
 
@@ -265,7 +265,7 @@ body {
     }
 
     .wrapper {
-        width: 90%;
+        width: 80%;
         max-width: 100%;
         position: relative;
         margin: 10px auto;
