@@ -73,7 +73,7 @@
                 scene : {
                     preload : preload,
                     create : create,
-                    // update : update,
+                    update : update,
                 }
             
             };
@@ -88,63 +88,69 @@
                 this.load.image('stand', 'static/Assets/stnd.png');
             }
 
-            function create(){
+            function create() {
                 console.log("Create");
 
                 let currentPairing = null;
 
-                //currentPairing intialization if stored in local storage
+                // currentPairing initialization if stored in local storage
                 const storedPairing = localStorage.getItem('userPairing');
                 if (storedPairing) {
                     currentPairing = JSON.parse(storedPairing);
                 }
 
-                //buttons
+                // buttons
                 // <button onclick="spinwheel()">Click me</button>
                 // this.load.onClick('spinwheel();');
 
-                //create the background image
+                // create the background image
                 let W = game.config.width;
                 let H = game.config.height;
-                
-                let background = this.add.sprite(0,0,'background');
-                background.setPosition(W/2,H/2);
+
+                let background = this.add.sprite(0, 0, 'background');
+                background.setPosition(W / 2, H / 2);
                 background.setScale(0.18);
 
-                //lets create the stand
-                let stand = this.add.sprite(W/2,H/2,'stand');
+                // lets create the stand
+                let stand = this.add.sprite(W / 2, H / 2, 'stand');
                 stand.setScale(0.8);
-                
 
-                //lets create a pin
-                let pin = this.add.sprite(W/2,H/2,"pin");
+                // lets create a pin
+                let pin = this.add.sprite(W / 2, H / 2, "pin");
                 pin.setScale(0.8);
                 pin.depth = 1;
-                
-                //let create wheel
-                this.wheel = this.add.sprite(W/2,H/2,"wheel");
-                this.wheel.setScale(0.215); 
-                //this.wheel.alpha = 0.5;
-                
-                
+
+                // let create wheel
+                this.wheel = this.add.sprite(W / 2, H / 2, "wheel");
+                this.wheel.setScale(0.215);
+                // this.wheel.alpha = 0.5;
+
+                // event listener for mouse click
+                this.input.on("pointerdown", function (pointer) {
+                    if (this.wheel.getBounds().contains(pointer.x, pointer.y)) {
+                        spinwheel(this);
+                    } // 'this' refers to the scene object
+                }, this);
 
                 // the game has just started = we can spin the wheel
                 this.canSpin = true;
-                
-                //event listener for mouse click
-                this.input.on("pointerdown",spinwheel,this);
-                
-                //lets create text object
+
+                // lets create text object
                 font_style = {
-                    font : "bold 40px Arial",
-                    align : "center",
-                    color : "white",
-                }
-                this.game_text = this.add.text(50, 80, "🌟✨ click santa and let fate reveal 🎅🤶",font_style);
+                    font: "bold 40px Arial",
+                    align: "center",
+                    color: "white",
+                };
+                this.game_text = this.add.text(50, 80, "🌟✨ click santa and let fate reveal 🎅🤶", font_style);
                 
                 
-                
+            // Show alert if the user is already paired
+            if (current_user.chosen_by_id) {
+                alert(`You are already paired with ${current_user.chosen_by.name}`);
             }
+        }
+                
+                
             document.addEventListener('DOMContentLoaded', function(){
                 var script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
@@ -210,14 +216,17 @@
                 document.head.append(script);
             });
             //Game Loop
-            // function update(){
-            //     console.log("Inside Update");
-            //     //this.wheel.angle += 1;
-            // }
+            function update(){
+                if (this.wheel){
+                    console.log("Inside Update");
+                    this.wheel.angle += 1;
+                }
+            }
 
             let chosen_user = new Set();
 
-            function spinwheel(check) {
+            function spinwheel(scene) {
+
                 // Check if there are available users to choose from
                 if (prizes_config.count <= 1) {
                     alert("No users available to be chosen.");
@@ -239,13 +248,13 @@
                 // check if all users are paired. You cannot spin again
                 if (chosen_user.size === prizes_config.count - 1) {
                     alert('All users are paired. You cannot spin the wheel. ');
-                    return;      
+                    return;
                 }
 
                 // Can we spin the wheel?
-                if (this.canSpin) {
+                if (scene.canSpin) {
                     // Player cannot spin
-                    this.canSpin = false;
+                    scene.canSpin = false;
 
                     console.log("You clicked the mouse");
                     console.log("Start spinning");
@@ -262,7 +271,14 @@
                     let chosenUserName = prizes_config.prize_names[idx];
                     if (chosen_user.has(chosenUserName)) {
                         alert(`You have already chosen ${chosenUserName}.`);
-                        this.canSpin = true;
+                        scene.canSpin = true;
+                        return;
+                    }
+
+                    // Check if the chosen user is the current user
+                    if (chosenUserName === current_user.name) {
+                        alert("You cannot select yourself.");
+                        scene.canSpin = true;
                         return;
                     }
 
@@ -270,15 +286,7 @@
                     currentPairing = { name: chosenUserName, id: idx };
 
                     if (prizes_config.count > 0) {
-                        // Add the chosen user to the set
-                        chosen_user.add(chosenUserName);
-
-                        // Save the information to local storage
-                        localStorage.setItem('userPairing', JSON.stringify(currentPairing));
-
-                        this.game_text.setText(`You got: ${chosenUserName}\nChosen: ${chosenUserName}`);
-                        alert(`You chose: ${chosenUserName}`);
-
+                        // send the information to the server
                         fetch('/save_pairing', {
                             method: 'POST',
                             headers: {
@@ -289,24 +297,31 @@
                                 chosenUserId: idx, // Include the chosen user ID for backend storage
                             }),
                         })
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log(data);
-                                // Handle the response, update the UI
-                            })
-                            .catch(error => {
-                                console.error("Error", error);
-                            });
-
-                        // Player can spin
-                        this.canSpin = true;
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                            // Handle the response, update the UI
+                            if (data.success) {
+                                // Update the UI to show the chosen user
+                                if (data.chosenUserId === null) {
+                                    scene.game_text.setText(`You got: ${chosenUserName}\nYou can choose this user`);
+                                } else {
+                                    scene.game_text.setText(`You got: ${chosenUserName}\nChosen by: ${data.chosenUserName}`);
+                                }
+                            } else {
+                                // Handle errors from the server
+                                alert(data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error", error);
+                        });
                     }
                 }
             }
 
 
         </script>
-
     </body>
 
 </html>
