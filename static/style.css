@@ -217,11 +217,32 @@ body {
     #registerWrapper {
         width: 100%;
         max-width: 400px; /* Adjust the maximum width as needed */
-        margin: 20px;
+        margin: 20px auto;
     }
 
     #loginWrapper.active,
     #registerWrapper.active {
         display: block;
+    }
+    .aesthetic-text {
+        position: absolute;
+        letter-spacing: .2em;
+        bottom: 5%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 2.5vh;
+        color: #ffffff;
+        font-family: 'Dancing Script', cursive;
+    }
+
+    .texthead {
+        position: absolute;
+        top: 5%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        font-size: 2.5vh;
+        letter-spacing: 2.5vh;
+        color: #ffffff;
     }
 }
