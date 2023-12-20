@@ -205,55 +205,77 @@ body {
 
 /* Additional styles for small devices */
 @media screen and (max-width: 600px) {
-    .login-register {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        position: relative;
+    body {
+        align-items: flex-start;
     }
 
     .image-container {
-        width: 70%; /* Adjust the width as needed */
-        max-width: 100%;
-        margin: 20px auto;
-        position: relative;
+        width: 100%;
+        height: auto;
     }
 
     .texthead {
-        position: absolute;
-        top: 5%;
-        left: 50%;
-        transform: translateX(-50%);
+        position: static;
         width: 90%;
         font-size: 2.5vh;
         letter-spacing: .2em;
         color: #ffffff;
-        text-align: center; /* Center the text */
+        text-align: center;
+        margin: 10px auto;
     }
 
-    #loginWrapper,
-    #registerWrapper {
-        width: 70%; /* Adjust the width as needed */
-        max-width: 100%;
-        margin: 20px auto;
-        position: relative;
-        display: none; /* Hide the forms initially */
-    }
-
-    #loginWrapper.active,
-    #registerWrapper.active {
-        display: block;
-    }
-
-    .aesthetic-text {
-        position: absolute;
-        letter-spacing: .2em;
-        bottom: 5%;
+    .register, .login {
+        width: 70%;
+        height: 30%;
+        top: auto;
         left: 50%;
         transform: translateX(-50%);
+    }
+
+    .register {
+        top: auto;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .login p, .aesthetic-text {
+        position: static;
+        width: 90%;
         font-size: 2.5vh;
+        letter-spacing: .2em;
         color: #ffffff;
-        font-family: 'Dancing Script', cursive;
+        text-align: center;
+        margin: 10px auto;
+    }
+
+    .aesthetic-text::before, .aesthetic-text::after {
+        content: "❄✩❄✩";
+        position: static;
+        left: auto;
+        color: #e74c3c;
+        font-size: 10px;
+        animation: none;
+    }
+
+    .bottom-right-image {
+        width: 20%;
+        height: auto;
+        border-radius: 0 0 15px 0;
+        animation: none;
+    }
+
+    .wrapper {
+        width: 90%;
+        max-width: 100%;
+        position: relative;
+        margin: 10px auto;
+    }
+
+    .input-box input {
+        width: 100%;
+    }
+
+    .btn {
+        width: 100%;
     }
 }
-
