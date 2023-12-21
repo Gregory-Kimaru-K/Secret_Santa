@@ -87,7 +87,7 @@ def register():
         confirmpassword =request.form.get('confirmpassword')
 
 
-        if len(name) < 14:
+        if len(name) < 10:
             flash('Error: Name must be atleast 14 characters long', 'error')
             return redirect(url_for('register'))
 
@@ -143,7 +143,6 @@ def login():
 
             if user.verify_password(password):
                 login_user(user)
-                flash(f'Welcome back, {user.name}! Login successful!\n', 'success')
                 return redirect(url_for('user'))
             else:
                 flash('Incorrect password. Please try again.\n', 'error')

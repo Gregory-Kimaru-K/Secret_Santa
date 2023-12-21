@@ -252,7 +252,13 @@
                             console.log("Chosen Users Set:", chosen_user);
                             console.log("Current User's Chosen Users:", current_user.chosen_users);
 
-                            // Check if the chosen user is the current user
+                        // check if there is only one user 
+			    if (num_segments === 1 && chosenUserName === current_user.name) {
+				alert("Cannot pair! There is only one user in the system, please add more users! ");
+				    return;
+
+			    }
+			// Check if the chosen user is the current user
                             if (chosenUserName === current_user.name) {
                                 alert("Please spin again.");
                                 this.canSpin = true;
@@ -261,7 +267,7 @@
 
                             // Check if the chosen user is already chosen
                             if (chosen_user.has(chosenUserName)) {
-                                alert(`Please spin again.`);
+                                alert(`Please spin again, user already choosen.`);
                                 this.canSpin = true;
                                 return;
                             }
@@ -285,6 +291,7 @@
 
                                 this.game_text.setText(`You got: ${chosenUserName}\nChosen: ${chosenUserName}`);
                                 alert(`You chose: ${chosenUserName}`);
+				return;
 
                                 // Update the User model to store the chosen_by information
                                 fetch('/save_pairing', {
