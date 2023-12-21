@@ -1,4 +1,3 @@
-app.py 
 from flask import Flask, render_template, redirect, url_for, request, flash, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -34,7 +33,8 @@ class User(db.Model, UserMixin):
     name = db.Column(db.String(100), nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    # chosen_by = db.relationship('Pairing', foreign_keys='Pairing.chosen_id', backref='chosen_user', lazy='dynamic')
+    chosen_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    chosen_by = db.relationship('User', foreign_keys=[chosen_by_id], backref='chosen_users', remote_side=[id])
 
     @property
     def password(self):
@@ -49,12 +49,17 @@ class User(db.Model, UserMixin):
     
     def get_pairing(self):
         return Pairing.query.filter_by(chooser_id=self.id).all()
-
+    
 class Pairing(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     chooser_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    chosen_id = db.Column(db.Integer, unique=True, nullable=False)
+    chosen_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    chooser = db.relationship('User', foreign_keys=[chooser_id], backref='chooser_pairings', lazy=True)
+    chosen = db.relationship('User', foreign_keys=[chosen_id], backref='chosen_pairings', lazy=True)
+
 
 class CustomJSONEncoder(flask_json.JSONEncoder):
     def default(self, obj):
@@ -179,13 +184,16 @@ def internal_error(error):
 @app.route('/wheel')
 @login_required
 def wheel():
+    user = User.query.get(current_user.id)
+    chosen_user = user.chosen_by
+
     users = User.query.all()
     users_data = [{'id': user.id, 'name': user.name} for user in users]
     num_segments = len(users)
-    # convert current_user to a serialized for mainly because local proxy cannot directly serialize to JSON
     current_user_data = {'id': current_user.id, 'name': current_user.name}
 
-    return render_template('wheel.html', users=users_data, num_segments=num_segments, current_user=current_user_data)
+    return render_template('wheel.html', users=users_data, num_segments=num_segments, current_user=current_user_data, chosen_user=chosen_user)
+
 
 @app.route("/save_pairing", methods=['POST'])
 @login_required
@@ -193,36 +201,33 @@ def save_pairing():
     data = request.get_json()
 
     chooser_id = data.get('chooserId')
+    chosen_id = data.get('chosenUserId')
 
-   #Check if the chooser has made a choice
+    # Check if the chooser has made a choice
     existing_pairing = Pairing.query.filter_by(chooser_id=chooser_id).first()
     if existing_pairing:
         return jsonify({"error": "Chooser has already made choice"})
 
-    #Get a list of all users excluding the chooser
-    all_users_except_chooser = User.query.filter(User.id != chooser_id).all()
-
-    #randomly select a user from the list as the chosen one
-    chosen_user = choice(all_users_except_chooser)
-    chosen_id = chosen_user.id
-  
-    #check if chosn user has already been chosen
-    if chosen_id in chosen_users:
+    # Check if the chosen user has already been chosen
+    if Pairing.query.filter_by(chosen_id=chosen_id).first():
         return jsonify({"error": "Chosen user has already been chosen"})
-    
+
     if chosen_id == chooser_id:
         return jsonify({"error": "User cannot choose themselves"})
 
-    #add chosen person to list of users
-    chosen_users.add(chosen_id)
+    # Update the User model to store the chosen_by information
+    user = User.query.get(chooser_id)
+    user.chosen_by_id = chosen_id
+    db.session.commit()
 
     new_pairing = Pairing(chooser_id=chooser_id, chosen_id=chosen_id)
     db.session.add(new_pairing)
     db.session.commit()
 
     print("Pairing saved successfully.")
-    
-    return jsonify ({"success": "Pairing saved successfully"})
+
+    return jsonify({"success": "Pairing saved successfully"})
+
 
 #Display the current pairings
 @app.route("/pairings")
