@@ -247,9 +247,28 @@
                             let idx = prizes_config.count - 1 - Math.floor(degrees / (360 / prizes_config.count));
                             let chosenUserName = prizes_config.prize_names[idx];
 
+                            // Log to check the values
+                            console.log("Chosen User:", chosenUserName);
+                            console.log("Chosen Users Set:", chosen_user);
+                            console.log("Current User's Chosen Users:", current_user.chosen_users);
+
+                            // Check if the chosen user is the current user
+                            if (chosenUserName === current_user.name) {
+                                alert("Please spin again.");
+                                this.canSpin = true;
+                                return;
+                            }
+
                             // Check if the chosen user is already chosen
                             if (chosen_user.has(chosenUserName)) {
-                                alert(`You have already chosen ${chosenUserName}.`);
+                                alert(`Please spin again.`);
+                                this.canSpin = true;
+                                return;
+                            }
+
+                            // Check if the chooser has already made a choice
+                            if (current_user.chosen_users && current_user.chosen_users.length > 0) {
+                                alert("You have already made a choice.");
                                 this.canSpin = true;
                                 return;
                             }
@@ -267,9 +286,7 @@
                                 this.game_text.setText(`You got: ${chosenUserName}\nChosen: ${chosenUserName}`);
                                 alert(`You chose: ${chosenUserName}`);
 
-                                // Allow the player to spin again
-                                this.canSpin = true;
-
+                                // Update the User model to store the chosen_by information
                                 fetch('/save_pairing', {
                                     method: 'POST',
                                     headers: {
@@ -288,11 +305,17 @@
                                     .catch(error => {
                                         console.error("Error", error);
                                     });
+
+                                // Allow the player to spin again
+                                this.canSpin = true;
                             }
+
                         }
                     });
+
                 }
             }
+
 
         </script>
 
