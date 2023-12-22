@@ -97,6 +97,7 @@
                 const storedPairing = localStorage.getItem('userPairing');
                 if (storedPairing) {
                     currentPairing = JSON.parse(storedPairing);
+                    this.game_text.setText("You got: ${currentPairing.name} \nChosen: ${currentPairing.name}")
                 }
 
                 //buttons
