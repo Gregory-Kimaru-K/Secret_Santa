@@ -180,19 +180,6 @@ def internal_error(error):
     logging.error(f"Internal Server Error: {error}")
     return render_template('500.html'), 500
 
-@app.route('/wheel')
-@login_required
-def wheel():
-    user = User.query.get(current_user.id)
-    chosen_user = user.chosen_by
-
-    users = User.query.all()
-    users_data = [{'id': user.id, 'name': user.name} for user in users]
-    num_segments = len(users)
-    current_user_data = {'id': current_user.id, 'name': current_user.name}
-
-    return render_template('wheel.html', users=users_data, num_segments=num_segments, current_user=current_user_data, chosen_user=chosen_user)
-
 
 @app.route("/save_pairing", methods=['POST'])
 @login_required
@@ -227,6 +214,26 @@ def save_pairing():
 
     return jsonify({"success": "Pairing saved successfully"})
 
+@app.route('/wheel')
+@login_required
+def wheel():
+    user = User.query.get(current_user.id)
+    chosen_user = user.chosen_by
+
+    # fetch the chosen user information
+    if chosen_user:
+        chosen_user.data = {'id': chosen_user.id, 'name': chosen_user.name}
+    
+    else:
+        chosen_user = User()
+        chosen_user.data = None
+
+    users = User.query.all()
+    users_data = [{'id': user.id, 'name': user.name} for user in users]
+    num_segments = len(users)
+    current_user_data = {'id': current_user.id, 'name': current_user.name}
+
+    return render_template('wheel.html', users=users_data, num_segments=num_segments, current_user=current_user_data, chosen_user=chosen_user)
 
 #Display the current pairings
 @app.route("/pairings")

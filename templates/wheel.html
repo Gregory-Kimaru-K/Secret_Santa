@@ -252,6 +252,13 @@
                             console.log("Chosen Users Set:", chosen_user);
                             console.log("Current User's Chosen Users:", current_user.chosen_users);
 
+                            // check if the chosen user has already been chosen
+                            if (chosen_user.has(chosenUserName)) {
+                                alert ('Please spin again, user already has Santa')
+                                this.canSpin = true;
+                                return;
+                            }
+
                         // check if there is only one user 
 			    if (num_segments === 1 && chosenUserName === current_user.name) {
 				alert("Cannot pair! There is only one user in the system, please add more users! ");
